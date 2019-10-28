@@ -1,0 +1,13 @@
+name = "Animated_CMA_ES"
+uuid = "5bc6b1fa-18b9-43d1-bf6d-359a80b011df"
+authors = ["deivisangeli <54904072+deivisangeli@users.noreply.github.com>"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
