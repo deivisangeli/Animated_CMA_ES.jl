@@ -6,6 +6,9 @@
 
 This is a problem set exercise (pset 6 ex 4).
 
+Please see src folder for code and examples
+
+
 ## For grader:
 
 Professor Schrimpf suggested we do not spend much more than
