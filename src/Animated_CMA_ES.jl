@@ -1,5 +1,6 @@
 module Animated_CMA_ES
 
+using Plots, LinearAlgebra
 
 function cma_es(f,x0;tol=1e-5,maxiter=1e3, animate=true,
        xrange=[-2., 3.], yrange=[-2.,6.])
