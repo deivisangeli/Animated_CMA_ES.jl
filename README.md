@@ -4,7 +4,7 @@
 [![Codecov](https://codecov.io/gh/deivisangeli/Animated_CMA_ES.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/deivisangeli/Animated_CMA_ES.jl)
 
 
-This is a problem set exercise.
+This is a problem set exercise (pset 6 ex 4).
 
 ## For grader:
 
