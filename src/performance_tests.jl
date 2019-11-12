@@ -1,26 +1,27 @@
-using Animated_CMA_ES
-using BenchmarkTools
-using Profile
+using Animated_CMA_ES, BenchmarkTools, Profile
 
-#start out with a simple optimization
-
-
+N=50
 function h(x)
     h=0.0
-    for i in 1:100
+    for i in 1:N
         h=h+(x[i]+Float64(i))^2
     end
     return h
 end
 
-cma_es(h,zeros(100),tol=1e-7)
+cma_es(h,zeros(N),tol=1e-5)
+new_cma_es(h,zeros(N),tol=1e-5)
 
-@btime cma_es(h,zeros(100),tol=1e-7)
+@btime cma_es(h,zeros(N),tol=1e-5)
+@btime new_cma_es(h,zeros(N),tol=1e-5)
 
-#around 2.1 oseconds, and 326000 allocationsv
 
 function prof()
     cma_es(h,zeros(100),tol=1e-7)
+end
+
+function new_prof()
+    new_cma_es(h,zeros(100),tol=1e-7)
 end
 
 
@@ -29,5 +30,7 @@ Profile.init(n=10^8,delay=0.000000001)
 @profile prof()
 Profile.print(noisefloor=2.0)
 
-
-@code_warntype cma_es(h,zeros(100),tol=1e-7)
+Profile.clear()
+Profile.init(n=10^8,delay=0.000000001)
+@profile new_prof()
+Profile.print(noisefloor=2.0)

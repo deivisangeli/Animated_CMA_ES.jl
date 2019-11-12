@@ -1,10 +1,19 @@
 
-function cma_es(f, x0 ; tol=1e-5,maxiter=1e3)
+#funtio
+
+function updateC!(C,c_1,c_μ,c_c,p_c,w,hsig,aux)
+    C=(1-c_1-c_μ)*C+
+            c_1*(p_c*p_c'+(1-hsig)*c_c*(2-c_c)*C)+
+            c_μ*aux*Diagonal(w)*aux'
+end
+
+function new_cma_es(f, x0 ; tol=1e-5,maxiter=1e3)
       N=length(x0)
       λ=4+floor(3*log(N))
       m=x0
       σ=0.3
       μ=floor(λ/2)
+      μ_Int=Integer(μ)
       w=(log(μ+0.5).-log.(1:μ))
       w=w/sum(w)
       μ_w=(sum(w)^2)/sum(w.^2)
@@ -22,34 +31,26 @@ function cma_es(f, x0 ; tol=1e-5,maxiter=1e3)
       C=(B*Diagonal(D.^2)*B')
       invsqrtC=B*Diagonal( D.^-1 )*B'
       eigeneval=0
-
       χ_N=sqrt(N)*(1-1/(4*N) +1/(21*N^2) )
-
       count=0
       normdiff=Inf
       N=length(x0)
-
       fx=zeros(Integer(λ))
 
-      C=Diagonal(ones(N))
+      C=(Diagonal(ones(N)))
       X=(zeros(Integer(λ),N))
 
-      function loop(X,p_c,p_σ,c_1,c_μ,c_c,σ,C,m,
-        B,D,invsqrtC,eigeneval)
+      @inbounds for count in 1:maxiter
 
-          for count in 1:maxiter
-
-          oldxbest=X[1,:]
-          for i in 1:Integer(λ)
+          @inbounds @simd for i in 1:Integer(λ)
             X[i,:]=(σ.*B*(D.*randn(N,1))+m)'
             fx[i]=f(X[i,:])
-            #count=count+1
+            count=count+1
           end
 
-          X=X[sortperm(fx),:]
-          dm=(X[1:Integer(μ),:]'-repeat(m,1,Integer(μ)))*w
+          temp=@view (X[sortperm(fx),:])[1:μ_Int,:]
+          dm=(temp'-repeat(m,1,μ_Int))*w
           m=m+dm
-          #dm=-dm
           p_σ=(1-c_σ)*p_σ+
                   ((sqrt(c_σ*(2-c_σ)*μ_w)*invsqrtC)*dm)/σ
 
@@ -57,27 +58,24 @@ function cma_es(f, x0 ; tol=1e-5,maxiter=1e3)
 
           p_c=(1-c_c)*p_c+(hsig*sqrt(c_c*(2-c_c)*μ)/σ) *dm
 
-          aux=(1/σ).*(X[1:Integer(μ),:]'-repeat(m,1,Integer(μ)) )
-          C=(1-c_1-c_μ)*C+
-                  c_1*(p_c*p_c'+(1-hsig)*c_c*(2-c_c)*C)+
-                  c_μ*aux*Diagonal(w)*aux'
+          aux=(1/σ).*(temp'-repeat(m,1,μ_Int) )
+
+          updateC!(C,c_1,c_μ,c_c,p_c,w,hsig,aux)
+
           σ=σ*exp( (c_σ/damp_σ)*(norm(p_σ)/χ_N-1) )
 
           if count-eigeneval>λ/(c_1+c_μ)/N/10
             eigeneval=count
-            C=UpperTriangular(C)+UpperTriangular(C)'-Diagonal(C)
-            B=eigvecs(C)
-            D=eigvals(C).^(0.5)
+            C=(C+C')./2
+            eig=eigen(C)
+            invsqrtC=eig.vectors'*Diagonal( eig.values.^-0.5 )*eig.vectors
           end
-          invsqrtC=B'*Diagonal( D.^-1 )*B
           count=count+1
           normdiff=norm(dm)
-          #normdiff=norm(dm)
           if normdiff< tol #|| maximum(D)>1e7*minimum(D)
                   break
           end
           end
           return(f(X[1,:]),X[1,:])
-      end
-      loop(X,p_c,p_σ,c_1,c_μ,c_c,σ,C,m,B,D,invsqrtC,eigeneval)
+
 end
